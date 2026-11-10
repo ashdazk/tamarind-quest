@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#5c94fc" />
+<title>Quest: Tamarind Square! 🍄</title>
+<!-- Google Retro Pixel Font -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sky: #90d8d8;
+    --cream: #fff8e0;
+    --ink: #000000;
+    --border-dark: #1b1b1b;
+    --shadow-color: #000000;
+    --pink: #ff77a8;
+    --green: #00e436;
+    --yellow: #ffec27;
+    --red: #ff004d;
+    --wood-bg: #83769c;
+    --wood-border: #291d2b;
+  }
+
+  * {
+    box-sizing: border-box;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+    font-family: 'Press Start 2P', monospace;
+    color: var(--ink);
+    background-color: var(--sky);
+    overflow-x: hidden;
+  }
+
+  /* Retro CRT/Pixel Game Container */
+  .game {
+    min-height: 100vh;
+    min-height: 100svh;
+    position: relative;
+    overflow: hidden;
+    background: var(--sky);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px;
+  }
+
+  /* Scanline FX overlay */
+  .scanlines {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 100;
+    background: linear-gradient(
+      rgba(18, 16, 16, 0) 50%, 
+      rgba(0, 0, 0, 0.15) 50%
+    );
+    background-size: 100% 4px;
+  }
+
+  /* Pixel Cloud & Scenery (SMW Style) */
+  .bg-mountain-container {
+    position: absolute;
+    bottom: 54px;
+    left: 0;
+    right: 0;
+    height: 300px;
+    z-index: 0;
+    pointer-events: none;
+  }
+  
+  .smw-cloud {
+    position: absolute;
+    z-index: 0;
+    animation: floatCloud 24s linear infinite alternate;
+  }
+  
+  .smw-cloud.c2 {
+    animation-duration: 35s;
+    animation-direction: alternate-reverse;
+  }
+
+  @keyframes floatCloud {
+    from { transform: translateX(-20px); }
+    to { transform: translateX(35px); }
+  }
+
+  .pixel-ground {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background-color: #d8a038;
+    background-image: 
+      radial-gradient(#985810 20%, transparent 20%),
+      radial-gradient(#985810 20%, transparent 20%);
+    background-size: 16px 16px;
+    background-position: 0 0, 8px 8px;
+    border-top: 12px solid #00c800;
+    box-shadow: inset 0 4px 0 #00e800, 0 -4px 0 #000;
+    z-index: 1;
+  }
+
+  /* Audio Control Floating Pixel Button */
+  .sound-toggle {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 101;
+    background: #ffec27;
+    border: 4px solid #000;
+    box-shadow: 4px 4px 0 #000;
+    padding: 8px 10px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .sound-toggle:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 #000;
+  }
+
+  /* Header & Level Display */
+  .topbar {
+    width: min(800px, 100%);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 3;
+    margin-top: 6px;
+    margin-bottom: 12px;
+  }
+
+  .brand, .level {
+    background: #fff;
+    border: 4px solid #000;
+    box-shadow: 4px 4px 0 #000;
+    padding: 8px 12px;
+    font-size: 10px;
+    line-height: 1.4;
+  }
+  .brand span { color: var(--red); }
+  .level { background: #ffec27; }
+
+  /* Main Stage Frame */
+  .stage {
+    width: min(720px, 100%);
+    margin: 0 auto 60px;
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .scene {
+    width: 100%;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+  .scene.active { display: flex; }
+
+  /* Pixel Progress Bar (Hearts/Coins) */
+  .progress-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .pixel-heart {
+    width: 16px;
+    height: 16px;
+    background: #291d2b;
+    clip-path: polygon(
+      0% 25%, 25% 25%, 25% 0%, 50% 0%, 50% 25%, 75% 25%, 75% 0%, 100% 0%, 
+      100% 50%, 75% 50%, 75% 75%, 50% 75%, 50% 100%, 50% 100%, 50% 75%, 25% 75%, 
+      25% 50%, 0% 50%
+    );
+  }
+  .pixel-heart.on {
+    background: var(--red);
+  }
+
+  /* Pixel Banner Tags */
+  .pixel-tag {
+    background: #ffec27;
+    border: 4px solid #000;
+    box-shadow: 4px 4px 0 #000;
+    padding: 8px 12px;
+    font-size: 9px;
+    line-height: 1.4;
+    text-align: center;
+  }
+
+  /* Pixel Character Wrapper */
+  .avatar-wrap {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    width: 100%;
+    height: 170px;
+  }
+
+  .pixel-avatar {
+    width: 160px;
+    height: 160px;
+    animation: pixelBob 1s steps(2, start) infinite alternate;
+  }
+
+  @keyframes pixelBob {
+    from { transform: translateY(0); }
+    to { transform: translateY(-8px); }
+  }
+
+  /* 8-Bit Pixel Speech Bubble */
+  .pixel-bubble {
+    position: relative;
+    background: var(--cream);
+    border: 5px solid #000;
+    box-shadow: 6px 6px 0 #000;
+    padding: 16px;
+    width: 100%;
+    text-align: center;
+  }
+  .pixel-bubble::after {
+    content: "";
+    position: absolute;
+    bottom: -16px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 16px 16px 0 16px;
+    border-color: #000 transparent transparent transparent;
+  }
+  .pixel-bubble-inner {
+    position: relative;
+    z-index: 1;
+  }
+  .pixel-bubble p, .pixel-bubble h1 {
+    font-size: 11px;
+    line-height: 1.8;
+    margin: 0;
+  }
+
+  .accent { color: var(--red); }
+  .accent-blue { color: #29adff; }
+  .accent-green { color: #00e436; }
+
+  /* Pixel Buttons */
+  .pixel-btn {
+    font-family: inherit;
+    font-size: 10px;
+    line-height: 1.4;
+    font-weight: bold;
+    cursor: pointer;
+    border: 4px solid #000;
+    background: #ffec27;
+    color: #000;
+    box-shadow: 5px 5px 0 #000;
+    padding: 14px 18px;
+    text-transform: uppercase;
+    touch-action: manipulation;
+    margin-top: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .pixel-btn:hover {
+    background: #fff176;
+  }
+  .pixel-btn:active {
+    transform: translate(3px, 3px);
+    box-shadow: 2px 2px 0 #000;
+  }
+  .pixel-btn.green { background: #00e436; color: #000; }
+  .pixel-btn.green:hover { background: #66f487; }
+  .pixel-btn.red { background: #ff004d; color: #fff; }
+  .pixel-btn.red:hover { background: #ff5983; }
+  .pixel-btn.white { background: #fff; }
+
+  .btn-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+  }
+
+  /* Pixel Wooden Sign Board */
+  .pixel-wood {
+    width: 100%;
+    background: #ab5236;
+    border: 5px solid #000;
+    box-shadow: 6px 6px 0 #000;
+    color: #ffe478;
+    padding: 16px 12px;
+    text-align: center;
+    position: relative;
+  }
+  .pixel-wood h2 {
+    font-size: 12px;
+    line-height: 1.6;
+    margin: 0 0 6px 0;
+    color: #fff;
+    text-shadow: 2px 2px #000;
+  }
+  .pixel-wood p {
+    font-size: 9px;
+    margin: 0;
+    color: #ffec27;
+  }
+
+  /* Pixel Quest Memo Board */
+  .pixel-memo {
+    width: 100%;
+    background: #fff8e0;
+    border: 5px solid #000;
+    box-shadow: 6px 6px 0 #000;
+    padding: 16px;
+  }
+  .pixel-memo-title {
+    font-size: 11px;
+    text-align: center;
+    background: #ffa300;
+    border: 3px solid #000;
+    padding: 8px;
+    margin: -6px auto 14px;
+    max-width: 260px;
+    box-shadow: 3px 3px 0 #000;
+  }
+  .pixel-memo-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 0;
+    border-bottom: 3px dashed #ab5236;
+    font-size: 9px;
+    line-height: 1.6;
+  }
+  @media(min-width: 500px) {
+    .pixel-memo-row {
+      display: grid;
+      grid-template-columns: 90px 1fr;
+    }
+  }
+  .pixel-memo-row b {
+    color: #ab5236;
+  }
+
+  /* Pixel Warning Box */
+  .pixel-warning {
+    width: 100%;
+    background: #ff004d;
+    border: 5px solid #000;
+    box-shadow: 5px 5px 0 #000;
+    padding: 12px;
+    font-size: 10px;
+    line-height: 1.7;
+    color: #fff;
+    text-shadow: 1px 1px #000;
+    text-align: center;
+  }
+  .pixel-warning strong {
+    display: block;
+    font-size: 12px;
+    color: #ffec27;
+    margin-bottom: 4px;
+  }
+
+  /* Mario Kart Background Elements */
+  .pixel-coin {
+    position: absolute;
+    width: 12px;
+    height: 18px;
+    background: #ffec27;
+    border: 3px solid #000;
+    border-radius: 4px;
+    animation: spinCoin 1s steps(4) infinite;
+    z-index: 1;
+  }
+  .pixel-coin::after {
+    content: "";
+    position: absolute;
+    left: 2px;
+    top: 2px;
+    width: 2px;
+    height: 8px;
+    background: #ffa300;
+  }
+  .pixel-mushroom, .pixel-turtle {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    z-index: 1;
+  }
+  @keyframes spinCoin {
+    0%, 100% { transform: scaleX(1); }
+    50% { transform: scaleX(0.2); }
+  }
+
+  /* Pixel Clock & Mini Avatars */
+  .pixel-clock {
+    width: 48px;
+    height: 48px;
+    margin: 4px auto;
+    animation: pixelBob 1.2s steps(2, start) infinite alternate;
+  }
+
+  /* Outcome Overlays */
+  .outcome {
+    position: fixed;
+    inset: 0;
+    display: none;
+    z-index: 150;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    text-align: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.85);
+  }
+  .outcome.show { display: flex; }
+
+  .outcome-card {
+    background: #fff8e0;
+    border: 6px solid #000;
+    box-shadow: 8px 8px 0 #000;
+    padding: 24px 16px;
+    max-width: 480px;
+    width: 100%;
+    position: relative;
+    z-index: 2;
+  }
+  .outcome-card h2 {
+    font-size: 16px;
+    line-height: 1.5;
+    margin-bottom: 14px;
+    color: var(--red);
+  }
+  .outcome-card p {
+    font-size: 9px;
+    line-height: 1.8;
+    margin-bottom: 12px;
+  }
+
+  .no-card {
+    background: #000;
+    border: 6px solid #ff004d;
+    box-shadow: 8px 8px 0 #ff004d;
+    color: #fff;
+  }
+  .no-card h2 {
+    color: #ff004d;
+    font-size: 18px;
+  }
+
+  /* Pixel Confetti Container */
+  #pixel-confetti-canvas {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .footer {
+    position: absolute;
+    bottom: 8px;
+    font-size: 8px;
+    color: #fff;
+    text-shadow: 2px 2px #000;
+    z-index: 3;
+    text-align: center;
+  }
+
+  @media(max-width: 480px) {
+    .brand, .level { font-size: 8px; padding: 6px 8px; }
+    .pixel-btn { font-size: 8.5px; padding: 12px 12px; }
+    .pixel-bubble p, .pixel-bubble h1 { font-size: 9.5px; }
+    .pixel-wood h2 { font-size: 10px; }
+  }
+</style>
+</head>
+<body>
+<div class="scanlines" aria-hidden="true"></div>
+
+<!-- Sound Control Toggle Button -->
+<button class="sound-toggle" id="soundToggle" type="button">
+  <span id="soundIcon">🔊</span> SOUND
+</button>
+
+<main class="game" id="game">
+  <!-- Retro Scenery -->
+  <!-- SMW Style Clouds -->
+  <svg class="smw-cloud" style="top: 40px; left: 10%; width: 64px; height: 32px;" viewBox="0 0 32 16">
+    <rect x="4" y="2" width="24" height="12" fill="#fff" stroke="#000" stroke-width="2"/>
+    <rect x="2" y="4" width="28" height="8" fill="#fff"/>
+    <rect x="8" y="6" width="2" height="4" fill="#000"/>
+    <rect x="22" y="6" width="2" height="4" fill="#000"/>
+  </svg>
+  <svg class="smw-cloud c2" style="top: 80px; right: 15%; width: 48px; height: 24px;" viewBox="0 0 32 16">
+    <rect x="4" y="2" width="24" height="12" fill="#fff" stroke="#000" stroke-width="2"/>
+    <rect x="2" y="4" width="28" height="8" fill="#fff"/>
+    <rect x="8" y="6" width="2" height="4" fill="#000"/>
+    <rect x="22" y="6" width="2" height="4" fill="#000"/>
+  </svg>
+
+  <!-- Background Mountains & Bushes -->
+  <div class="bg-mountain-container">
+    <svg width="100%" height="100%" preserveAspectRatio="none" style="shape-rendering:crispEdges;">
+      <!-- White Big Cloud behind mountains -->
+      <rect x="15%" y="40%" width="70%" height="60%" fill="#ffffff" opacity="0.8"/>
+      <rect x="25%" y="20%" width="50%" height="20%" fill="#ffffff" opacity="0.8"/>
+      <rect x="35%" y="10%" width="30%" height="10%" fill="#ffffff" opacity="0.8"/>
+      
+      <!-- Mountains -->
+      <polygon points="-50,300 150,100 350,300" fill="#c8c8b8" stroke="#000" stroke-width="2"/>
+      <polygon points="200,300 400,150 600,300" fill="#a8a898" stroke="#000" stroke-width="2"/>
+      <polygon points="500,300 700,50 900,300" fill="#d8d8c8" stroke="#000" stroke-width="2"/>
+      <polygon points="150,100 150,300 350,300" fill="#b8b8a8"/>
+      <polygon points="400,150 400,300 600,300" fill="#989888"/>
+      <polygon points="700,50 700,300 900,300" fill="#c8c8b8"/>
+
+      <!-- Pixel Bushes (Foreground) -->
+      <rect x="5%" y="250" width="10%" height="50" fill="#00c800" stroke="#000" stroke-width="2"/>
+      <rect x="8%" y="230" width="4%" height="20" fill="#00c800" stroke="#000" stroke-width="2"/>
+      <rect x="80%" y="240" width="15%" height="60" fill="#00c800" stroke="#000" stroke-width="2"/>
+      <rect x="83%" y="210" width="8%" height="30" fill="#00c800" stroke="#000" stroke-width="2"/>
+    </svg>
+  </div>
+  
+  <div class="pixel-ground" aria-hidden="true"></div>
+
+  <!-- SMW Green Pipe -->
+  <svg class="pixel-pipe" style="position: absolute; bottom: 60px; right: 8%; width: 48px; height: 64px; z-index: 1; shape-rendering:crispEdges;" viewBox="0 0 32 48">
+    <rect x="0" y="0" width="32" height="16" fill="#00e436" stroke="#000" stroke-width="2"/>
+    <rect x="2" y="16" width="28" height="32" fill="#00e436" stroke="#000" stroke-width="2"/>
+    <rect x="4" y="2" width="4" height="12" fill="#fff" opacity="0.6"/>
+    <rect x="6" y="16" width="4" height="32" fill="#fff" opacity="0.6"/>
+  </svg>
+
+  <!-- Mario Kart Elements -->
+  <div class="pixel-coin" style="bottom: 76px; left: 15%;"></div>
+  <div class="pixel-coin" style="bottom: 96px; left: 20%;"></div>
+  <div class="pixel-coin" style="bottom: 76px; left: 25%;"></div>
+  
+  <svg class="pixel-mushroom" style="bottom: 60px; right: 30%;" viewBox="0 0 16 16">
+    <rect x="4" y="2" width="8" height="8" fill="#ff004d"/>
+    <rect x="2" y="4" width="12" height="6" fill="#ff004d"/>
+    <rect x="6" y="10" width="4" height="4" fill="#fff8e0"/>
+    <rect x="4" y="4" width="2" height="2" fill="#fff"/>
+    <rect x="10" y="4" width="2" height="2" fill="#fff"/>
+    <rect x="7" y="2" width="2" height="2" fill="#fff"/>
+  </svg>
+
+  <svg class="pixel-turtle" style="bottom: 60px; right: 20%;" viewBox="0 0 16 16">
+    <rect x="2" y="6" width="12" height="6" fill="#00e436"/>
+    <rect x="4" y="4" width="8" height="2" fill="#00e436"/>
+    <rect x="2" y="12" width="12" height="2" fill="#fff8e0"/>
+    <rect x="4" y="6" width="2" height="4" fill="#008751"/>
+    <rect x="8" y="4" width="2" height="6" fill="#008751"/>
+  </svg>
+
+  <!-- Game Top Bar -->
+  <header class="topbar">
+    <div class="brand">🍄 <span>TAMARIND</span> QUEST</div>
+    <div class="level" id="levelDisplay">WORLD 1-1</div>
+  </header>
+
+  <!-- Interactive Stage -->
+  <div class="stage">
+    <!-- Heart Progress Bar -->
+    <div class="progress-bar" id="progressBar" aria-label="Quest Progress">
+      <div class="pixel-heart on"></div>
+      <div class="pixel-heart"></div>
+      <div class="pixel-heart"></div>
+      <div class="pixel-heart"></div>
+      <div class="pixel-heart"></div>
+    </div>
+
+    <!-- SCENE 0: Intro Quest -->
+    <section class="scene active" data-scene="0">
+      <div class="pixel-tag">✦ A SIDE QUEST WITH MY BESTIE ✦</div>
+      
+      <div class="avatar-wrap">
+        <!-- 100% Pixel Art Hijabi Girl wearing sideways creme cap and black hijab -->
+        <svg class="pixel-avatar" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pixel art hijabi girl wearing sideways creme cap and black hijab">
+          <!-- Sideways Creme Cap (Visor sticking to the right) -->
+          <rect x="10" y="3" width="12" height="2" fill="#F5EBE0"/>
+          <rect x="8" y="5" width="16" height="3" fill="#F5EBE0"/>
+          <rect x="22" y="7" width="7" height="2" fill="#E6D5C3"/> <!-- Cap Visor/Brim extending right -->
+          <rect x="14" y="4" width="4" height="1" fill="#E6D5C3"/> <!-- Cap Detail -->
+
+          <!-- Black Hijab Framing -->
+          <rect x="8" y="8" width="16" height="3" fill="#1A1A1A"/>
+          <rect x="7" y="11" width="18" height="13" fill="#1A1A1A"/>
+
+          <!-- Face (Skin Tone) -->
+          <rect x="10" y="11" width="12" height="9" fill="#F4C4A5"/>
+
+          <!-- Expressive Pixel Eyes -->
+          <rect x="11" y="13" width="3" height="4" fill="#FFFFFF"/>
+          <rect x="18" y="13" width="3" height="4" fill="#FFFFFF"/>
+          <rect x="12" y="14" width="2" height="3" fill="#000000"/>
+          <rect x="19" y="14" width="2" height="3" fill="#000000"/>
+          <rect x="13" y="14" width="1" height="1" fill="#FFFFFF"/> <!-- Eye shine -->
+          <rect x="20" y="14" width="1" height="1" fill="#FFFFFF"/>
+
+          <!-- Blushing Cheeks -->
+          <rect x="10" y="17" width="2" height="1" fill="#FF8AA3"/>
+          <rect x="20" y="17" width="2" height="1" fill="#FF8AA3"/>
+
+          <!-- Cute Smile -->
+          <rect x="14" y="18" width="4" height="1" fill="#AB5236"/>
+
+          <!-- Black Hijab Drape & Shoulders -->
+          <rect x="6" y="22" width="20" height="5" fill="#1A1A1A"/>
+          <!-- Light Blue Flannel Outfit -->
+          <rect x="5" y="27" width="22" height="5" fill="#29adff"/>
+          <rect x="7" y="27" width="2" height="5" fill="#1d2b53"/>
+          <rect x="11" y="27" width="2" height="5" fill="#1d2b53"/>
+          <rect x="15" y="27" width="2" height="5" fill="#1d2b53"/>
+          <rect x="19" y="27" width="2" height="5" fill="#1d2b53"/>
+          <rect x="23" y="27" width="2" height="5" fill="#1d2b53"/>
+          <rect x="5" y="29" width="22" height="1" fill="#fff"/>
+        </svg>
+      </div>
+
+      <div class="pixel-bubble">
+        <div class="pixel-bubble-inner">
+          <h1>DO YOU WANT TO HANG OUT WITH ME AT <span class="accent">TAMARIND SQUARE?</span> 🥹💗</h1>
+        </div>
+      </div>
+
+      <button class="pixel-btn green next-btn" type="button">TELL ME MORE! ▶</button>
+    </section>
+
+    <!-- SCENE 1: Location -->
+    <section class="scene" data-scene="1">
+      <div class="pixel-tag">🌿 NEW LOCATION UNLOCKED!</div>
+      
+      <div class="pixel-wood">
+        <h2>📍 TAMARIND SQUARE</h2>
+        <p>CYBERJAYA, MALAYSIA</p>
+      </div>
+
+      <div class="pixel-bubble">
+        <div class="pixel-bubble-inner">
+          <p>Tamarind Square is a <span class="accent-blue">mall with open-air concept</span> in Cyberjaya! Perfect for cute OOTD pics, fun activities and <span class="accent">lots of fooooods</span> 🍝📸🌿</p>
+        </div>
+      </div>
+
+      <div class="pixel-tag" style="background:#00e436; color:#000;">✨ MAIN QUEST: EAT • PLAY • OOTD ✨</div>
+
+      <button class="pixel-btn next-btn" type="button">SHOW THE PLAN ▶</button>
+    </section>
+
+    <!-- SCENE 2: Quest Details Board -->
+    <section class="scene" data-scene="2">
+      <div class="pixel-tag">📜 QUEST DETAILS</div>
+
+      <div class="pixel-memo">
+        <div class="pixel-memo-title">✦ ADVENTURE MEMO ✦</div>
+        <div class="pixel-memo-row">
+          <b>📍 WHERE</b>
+          <div>Tamarind Square, Cyberjaya</div>
+        </div>
+        <div class="pixel-memo-row">
+          <b>📍 MEET</b>
+          <div>MRT Batu 11<br><span style="color:#7e2553; font-size:8px;">(Then we go with my car! 🚗)</span></div>
+        </div>
+        <div class="pixel-memo-row">
+          <b>📆 WHEN</b>
+          <div>15 November 2026<br><span style="color:#7e2553; font-size:8px;">(Sunday)</span></div>
+        </div>
+        <div class="pixel-memo-row">
+          <b>🎮 PLAN</b>
+          <div>
+            ① Board games at <strong>Bored.</strong> 🎲<br>
+            ② Lunch at <strong>Glaze Eatery</strong> 🍝<br>
+            ③ Cute OOTD photoshoot! 📸
+          </div>
+        </div>
+        <div class="pixel-memo-row">
+          <b>💰 BUDGET</b>
+          <div>RM50-60 per player!</div>
+        </div>
+      </div>
+
+      <div class="pixel-warning">
+        <strong>⚠️ IMPORTANT WARNING ⚠️</strong>
+        Bring your handheld fan & umbrella! You know Malaysian weather... 🌞🌧️ <span style="color:#ffec27">#makakami 🇲🇾</span>
+      </div>
+
+      <button class="pixel-btn next-btn" type="button">GOT IT, CAPTAIN! ▶</button>
+    </section>
+
+    <!-- SCENE 3: Curfew Strategy -->
+    <section class="scene" data-scene="3">
+      <div class="pixel-tag">⏰ SECRET STRATEGY UNLOCKED</div>
+
+      <!-- Pixel Art Clock Graphics -->
+      <svg class="pixel-clock" viewBox="0 0 16 16" fill="none">
+        <rect x="4" y="1" width="8" height="14" fill="#000"/>
+        <rect x="1" y="4" width="14" height="8" fill="#000"/>
+        <rect x="4" y="2" width="8" height="12" fill="#FFF8E0"/>
+        <rect x="2" y="4" width="12" height="8" fill="#FFF8E0"/>
+        <rect x="7" y="4" width="2" height="5" fill="#FF004D"/>
+        <rect x="8" y="8" width="4" height="2" fill="#FF004D"/>
+      </svg>
+
+      <div class="pixel-bubble">
+        <div class="pixel-bubble-inner">
+          <p>We should <span class="accent-green">MEET EARLY!</span> More time to play boardgames & we get back home early...<br><br>Coz <span class="accent">someone has a curfew!</span> 💀</p>
+        </div>
+      </div>
+
+      <div class="pixel-wood">
+        <h2>EARLY BIRDS = MAX GAME TIME 🎲</h2>
+      </div>
+
+      <button class="pixel-btn next-btn" type="button">OKAY, I'M READY ▶</button>
+    </section>
+
+    <!-- SCENE 4: Final RSVP Choice -->
+    <section class="scene" data-scene="4">
+      <div class="pixel-tag">🏁 FINAL BOSS: MAKE YOUR CHOICE</div>
+
+      <div class="avatar-wrap" style="height:120px;">
+        <svg class="pixel-avatar" viewBox="0 0 32 32" style="width:110px; height:110px;">
+          <rect x="10" y="3" width="12" height="2" fill="#F5EBE0"/>
+          <rect x="8" y="5" width="16" height="3" fill="#F5EBE0"/>
+          <rect x="22" y="7" width="7" height="2" fill="#E6D5C3"/>
+          <rect x="8" y="8" width="16" height="3" fill="#1A1A1A"/>
+          <rect x="7" y="11" width="18" height="13" fill="#1A1A1A"/>
+          <rect x="10" y="11" width="12" height="9" fill="#F4C4A5"/>
+          <rect x="11" y="13" width="3" height="4" fill="#FFFFFF"/>
+          <rect x="18" y="13" width="3" height="4" fill="#FFFFFF"/>
+          <rect x="12" y="14" width="2" height="3" fill="#000000"/>
+          <rect x="19" y="14" width="2" height="3" fill="#000000"/>
+          <rect x="10" y="17" width="2" height="1" fill="#FF8AA3"/>
+          <rect x="20" y="17" width="2" height="1" fill="#FF8AA3"/>
+          <rect x="14" y="18" width="4" height="1" fill="#AB5236"/>
+          <rect x="6" y="22" width="20" height="5" fill="#1A1A1A"/>
+          <rect x="5" y="27" width="22" height="5" fill="#29adff"/>
+          <rect x="7" y="27" width="2" height="5" fill="#1d2b53"/>
+          <rect x="11" y="27" width="2" height="5" fill="#1d2b53"/>
+          <rect x="15" y="27" width="2" height="5" fill="#1d2b53"/>
+          <rect x="19" y="27" width="2" height="5" fill="#1d2b53"/>
+          <rect x="23" y="27" width="2" height="5" fill="#1d2b53"/>
+          <rect x="5" y="29" width="22" height="1" fill="#fff"/>
+        </svg>
+      </div>
+
+      <div class="pixel-wood">
+        <h2>ARE YOU IN BESTIE? 👀</h2>
+      </div>
+
+      <div class="btn-row">
+        <button class="pixel-btn green" id="yesBtn" type="button">YEAP! LET'S GO!! 🎉</button>
+        <button class="pixel-btn red" id="noBtn" type="button">NO. 🙄</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="footer">♥ PLAYER 1 IS WAITING FOR YOU ♥</div>
+</main>
+
+<!-- YES OUTCOME -->
+<section class="outcome" id="yesOutcome" aria-live="polite">
+  <canvas id="pixel-confetti-canvas"></canvas>
+  <div class="outcome-card">
+    <h2>YAYYY! 🎉🍄</h2>
+    <p>QUEST ACCEPTED!<br><br>See you at <strong>Tamarind Square!</strong> 🎲💗<br>Get ready to eat, play games & take 100 cute pictures!</p>
+    <p style="color:#008751; font-weight:bold;">⭐ FRIENDSHIP LEVEL MAXED OUT! ⭐</p>
+    <button class="pixel-btn white replay-btn" type="button">↻ REPLAY QUEST</button>
+  </div>
+</section>
+
+<!-- NO OUTCOME -->
+<section class="outcome" id="noOutcome" aria-live="polite">
+  <div class="outcome-card no-card">
+    <h2>I HATE YOU.</h2>
+    <p>💀 GAME OVER 💀<br>PLAYER 1 IS CRYING IN PIXELS...</p>
+    <button class="pixel-btn white replay-btn" type="button">↻ RETRY, TRAITOR</button>
+  </div>
+</section>
+
+<script>
+(() => {
+  'use strict';
+
+  // State
+  let currentScene = 0;
+  let audioMuted = false;
+  let audioCtx = null;
+  let isBgmPlaying = false;
+  let bgmInterval = null;
+
+  const scenes = Array.from(document.querySelectorAll('.scene'));
+  const hearts = Array.from(document.querySelectorAll('.pixel-heart'));
+  const levelDisplay = document.getElementById('levelDisplay');
+  const yesOutcome = document.getElementById('yesOutcome');
+  const noOutcome = document.getElementById('noOutcome');
+  const soundToggle = document.getElementById('soundToggle');
+  const soundIcon = document.getElementById('soundIcon');
+
+  /* ===================================================
+     8-BIT AUDIO SYNTHESIZER (Mario Kart Inspired Chiptune)
+     =================================================== */
+  function initAudio() {
+    if (!audioCtx) {
+      const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtxClass) {
+        audioCtx = new AudioCtxClass();
+      }
+    }
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+  }
+
+  // Play single chiptune note sound effect
+  function playTone(freq, type = 'square', duration = 0.1, volume = 0.15) {
+    if (audioMuted || !audioCtx) return;
+    try {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    } catch (e) {
+      // Audio fallback safety
+    }
+  }
+
+  // Sound Effects
+  function playClickSfx() {
+    initAudio();
+    // Quick Mario coin / jump button sound
+    playTone(493.88, 'square', 0.08, 0.15); // B4
+    setTimeout(() => playTone(659.25, 'square', 0.15, 0.15), 60); // E5
+  }
+
+  function playVictorySfx() {
+    initAudio();
+    // Mario Kart race start / fanfare
+    const notes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99];
+    notes.forEach((freq, idx) => {
+      setTimeout(() => playTone(freq, 'triangle', 0.18, 0.2), idx * 80);
+    });
+  }
+
+  function playGameOverSfx() {
+    initAudio();
+    // Mario Kart item slip / failure tone
+    const notes = [400, 350, 300, 250];
+    notes.forEach((freq, idx) => {
+      setTimeout(() => playTone(freq, 'sawtooth', 0.12, 0.2), idx * 90);
+    });
+  }
+
+  // Mario Kart Circuit Chiptune Loop Synthesizer
+  function startBgm() {
+    if (isBgmPlaying || audioMuted) return;
+    initAudio();
+    if (!audioCtx) return;
+    isBgmPlaying = true;
+
+    // Mario Kart main theme melody loop notes (frequencies in Hz)
+    const melody = [
+      659.25, 659.25, 0, 659.25, 0, 523.25, 659.25, 0,
+      783.99, 0, 0, 0, 392.00, 0, 0, 0,
+      523.25, 0, 0, 392.00, 0, 0, 329.63, 0,
+      440.00, 0, 493.88, 0, 466.16, 440.00, 0, 392.00
+    ];
+
+    let step = 0;
+    bgmInterval = setInterval(() => {
+      if (audioMuted) return;
+      const freq = melody[step % melody.length];
+      if (freq > 0) {
+        playTone(freq, 'square', 0.09, 0.05); // Upbeat background loop
+      }
+      step++;
+    }, 140);
+  }
+
+  function stopBgm() {
+    isBgmPlaying = false;
+    if (bgmInterval) clearInterval(bgmInterval);
+  }
+
+  // Audio Toggle Button
+  soundToggle.addEventListener('click', () => {
+    audioMuted = !audioMuted;
+    if (audioMuted) {
+      soundIcon.textContent = '🔇';
+      stopBgm();
+    } else {
+      soundIcon.textContent = '🔊';
+      startBgm();
+      playClickSfx();
+    }
+  });
+
+  /* ===================================================
+     NAVIGATION & SCENE LOGIC
+     =================================================== */
+  function showScene(index) {
+    currentScene = index;
+    scenes.forEach((s, i) => {
+      s.classList.toggle('active', i === index);
+    });
+
+    hearts.forEach((h, i) => {
+      h.classList.toggle('on', i <= index);
+    });
+
+    levelDisplay.textContent = `WORLD 1-${index + 1}`;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // Handle Next Buttons
+  document.querySelectorAll('.next-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      startBgm();
+      playClickSfx();
+      if (currentScene < scenes.length - 1) {
+        showScene(currentScene + 1);
+      }
+    });
+  });
+
+  // YES Choice Button
+  document.getElementById('yesBtn').addEventListener('click', () => {
+    playVictorySfx();
+    noOutcome.classList.remove('show');
+    yesOutcome.classList.add('show');
+    startPixelConfetti();
+  });
+
+  // NO Choice Button
+  document.getElementById('noBtn').addEventListener('click', () => {
+    playGameOverSfx();
+    yesOutcome.classList.remove('show');
+    noOutcome.classList.add('show');
+  });
+
+  // Replay Buttons
+  document.querySelectorAll('.replay-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      playClickSfx();
+      yesOutcome.classList.remove('show');
+      noOutcome.classList.remove('show');
+      showScene(0);
+    });
+  });
+
+  /* ===================================================
+     8-BIT RETRO PIXEL CONFETTI CANVAS
+     =================================================== */
+  let confettiAnimationId = null;
+  function startPixelConfetti() {
+    const canvas = document.getElementById('pixel-confetti-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const colors = ['#ff004d', '#ffec27', '#00e436', '#29adff', '#ff77a8', '#ffffff'];
+    const particles = [];
+
+    for (let i = 0; i < 90; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height - canvas.height,
+        size: Math.floor(Math.random() * 6) + 6, // Square pixel block size
+        color: colors[Math.floor(Math.random() * colors.length)],
+        speedY: Math.random() * 4 + 2,
+        speedX: Math.random() * 2 - 1
+      });
+    }
+
+    function render() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        ctx.fillStyle = p.color;
+        // Draw crisp 8-bit pixel square block
+        ctx.fillRect(Math.floor(p.x), Math.floor(p.y), p.size, p.size);
+        p.y += p.speedY;
+        p.x += p.speedX;
+
+        if (p.y > canvas.height) {
+          p.y = -10;
+          p.x = Math.random() * canvas.width;
+        }
+      });
+      confettiAnimationId = requestAnimationFrame(render);
+    }
+
+    if (confettiAnimationId) cancelAnimationFrame(confettiAnimationId);
+    render();
+  }
+
+  // Keyboard Navigation
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === 'ArrowRight') {
+      startBgm();
+      if (!yesOutcome.classList.contains('show') && !noOutcome.classList.contains('show')) {
+        if (currentScene < scenes.length - 1) {
+          playClickSfx();
+          showScene(currentScene + 1);
+        }
+      }
+    }
+  });
+
+  // Start initial audio on first user touch anywhere
+  document.body.addEventListener('touchstart', () => startBgm(), { once: true });
+  document.body.addEventListener('click', () => startBgm(), { once: true });
+
+  // Init default stage
+  showScene(0);
+
+})();
+</script>
+</body>
+</html>
